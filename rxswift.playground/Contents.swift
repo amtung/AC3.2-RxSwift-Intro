@@ -3,93 +3,93 @@ import UIKit
 import RxSwift
 
 example(of: "just") {
-  // .just() - Returns an observable sequence that contains a single element.
-  
-  // Array<Element>
-  // let array = [1, 2, 3, 4] <-- Array<Int>
-  // let other = ["a", "b"] <-- Array<String>
-  
-  // Observer : RX :: Functions : Swift
-  let observable = Observable.just("Hello, World!")
-  // Observable<String>
-  
-  // subscribe takes a closure that receives the emitted event and executes each time this event is emitted.
-  observable.subscribe({ (event: Event<String>) in
+    // .just() - Returns an observable sequence that contains a single element.
     
-    // print out each event as it is emitted
-    print(event)
-    // result ends up being a single next() event with the string sequence
-    // followed by the completed() event
+    // Array<Element>
+    // let array = [1, 2, 3, 4] <-- Array<Int>
+    // let other = ["a", "b"] <-- Array<String>
     
-    // when either the completed() or the error() events occur, the observed
-    // sequence can no longer emit more events
-  })
+    // Observer : RX :: Functions : Swift
+    let observable = Observable.just("Hello, World!")
+    // Observable<String>
+    
+    // subscribe takes a closure that receives the emitted event and executes each time this event is emitted.
+    observable.subscribe({ (event: Event<String>) in
+        
+        // print out each event as it is emitted
+        print(event)
+        // result ends up being a single next() event with the string sequence
+        // followed by the completed() event
+        
+        // when either the completed() or the error() events occur, the observed
+        // sequence can no longer emit more events
+    })
 }
 
 
 // the "of" observer
 example(of: "of") {
-  let observable = Observable.of(1, 2, 3, 4, 5)
-  
-  // result of this is 3 next() events
-  // followed by the completed() event
-  observable.subscribe {
-    // $0 -> Event<Int>
-    print($0)
-  }
-  
-  /*
-   observable.subscribe(onNext: (Int) -> Void?,
-   onError: (Error) -> Void?,
-   onCompleted: () -> Void?,
-   onDisposed: () -> Void?)
-   */
-  
-  observable
-    .subscribe(onNext: {
-      print($0)
-    }, onCompleted: {
-      print("other subscription completed")
-    })
-  
+    let observable = Observable.of(1, 2, 3, 4, 5)
+    
+    // result of this is 3 next() events
+    // followed by the completed() event
+    observable.subscribe {
+        // $0 -> Event<Int>
+        print($0) // next or completed event type, typing the name of the event
+    }
+    
+    /*
+     observable.subscribe(onNext: (Int) -> Void?,
+     onError: (Error) -> Void?,
+     onCompleted: () -> Void?,
+     onDisposed: () -> Void?) // deinit, make sure the cocoa reference gets deallocated
+     */
+    
+    observable
+        .subscribe(onNext: {
+            print($0)
+        }, onCompleted: {
+            print("other subscription completed")
+        })
+    
 }
 
 example(of: "from") {
-  let disposeBag = DisposeBag()
-  
-  /*
-   subscribe() returns a type of Disposable. This is an object
-   that conforms to a particular protocol to indicate it can be disposed.
-   */
-  let observable = Observable.from([1, 2, 3, 4, 5, 6])
-  let subscription: Disposable = observable.subscribe {
-    print($0)
-  }
-  subscription.disposed(by: disposeBag)
-  
-  let subscription2: Disposable = observable.subscribe {
-    print("This is the other subscribe", $0)
-  }
-  
-  observable
-    .subscribe { print("checking on another sub", $0) }
-    .disposed(by: disposeBag)
-  
-  // disposing of a subscription causes the underlying sequence to emit a completed event and to terminate. The sequence here was determined ahead of time, and so the completed event gets called automatically. However, in most cases you want the observer to continually emit events.
-  
-  // To remove a subscription properly, you'd need to call .dispose() on the Disposable object. But convention is to add observables to a DisposeBag and then to call dispose on all items in the DisposeBag in the deinit of a class.
+    let disposeBag = DisposeBag()
+    
+    /*
+     subscribe() returns a type of Disposable. This is an object
+     that conforms to a particular protocol to indicate it can be disposed.
+     */
+    let observable = Observable.from([1, 2, 3, 4, 5, 6])
+    let subscription: Disposable = observable.subscribe {
+        print($0)
+    }
+    subscription.disposed(by: disposeBag)
+    
+    let subscription2: Disposable = observable.subscribe {
+        print("This is the other subscribe", $0)
+    }
+    
+    observable
+        .subscribe { print("checking on another sub", $0) }
+        .disposed(by: disposeBag)
+    
+    // disposing of a subscription causes the underlying sequence to emit a completed event and to terminate. The sequence here was determined ahead of time, and so the completed event gets called automatically. However, in most cases you want the observer to continually emit events.
+    
+    // To remove a subscription properly, you'd need to call .dispose() on the Disposable object. But convention is to add observables to a DisposeBag and then to call dispose on all items in the DisposeBag in the deinit of a class.
 }
 
 example(of: "error") {
-  enum MyError: Error {
-    case testError
-  }
-  
-  Observable<Void>.error(MyError.testError)
-    .subscribe(onError: { (error: Error) in
-      print(error)
-    })
-  
+    enum MyError: Error {
+        case testError
+    }
+    
+    Observable<Void>.error(MyError.testError)
+        .subscribe(onError: { (error: Error) in
+            print(error)
+        })
+    
 }
 
 /*
@@ -123,115 +123,115 @@ example(of: "error") {
 
 // Only gets the events going forward
 example(of: "PublishSubject") {
-  
-  let disposeBag: DisposeBag = DisposeBag()
-  
-  // <Int> describes the .value of the Event(s) this observable stream will emit
-  // This is analogous to saying that
-  //
-  // let values = [1, 2, 3].map { $0 * $0 }
-  //
-  // values would be Array<Int> because map returns a type of Array<T> where
-  // T is the Element type of result of the map closure
-  
-  let observable = PublishSubject<Int>()
-  observable
-    .subscribe {
-      print("get all of them", $0)
-    }
-    .disposed(by: disposeBag)
-  
-  observable.onNext(1)
-  observable.onNext(2)
-  observable.onNext(3)
-  
-  // this only receives events that come after subscription
-  observable
-    .subscribe(onNext: {
-      print($0)
-    }, onCompleted: {
-      print("Stream completed")
-    })
-    .disposed(by: disposeBag)
-  
-  
-  observable.onNext(4)
-  observable.onNext(5)
-  
-  // PublishSubjects do not send a complete() event automatically, you have to
-  // specifically call it
-  observable.onCompleted()
+    
+    let disposeBag: DisposeBag = DisposeBag()
+    
+    // <Int> describes the .value of the Event(s) this observable stream will emit
+    // This is analogous to saying that
+    //
+    // let values = [1, 2, 3].map { $0 * $0 }
+    //
+    // values would be Array<Int> because map returns a type of Array<T> where
+    // T is the Element type of result of the map closure
+    
+    let observable = PublishSubject<Int>()
+    observable
+        .subscribe {
+            print("get all of them", $0)
+        }
+        .disposed(by: disposeBag)
+    
+    observable.onNext(1)
+    observable.onNext(2)
+    observable.onNext(3)
+    
+    // this only receives events that come after subscription
+    observable
+        .subscribe(onNext: {
+            print($0)
+        }, onCompleted: {
+            print("Stream completed")
+        })
+        .disposed(by: disposeBag)
+    
+    
+    observable.onNext(4)
+    observable.onNext(5)
+    
+    // PublishSubjects do not send a complete() event automatically, you have to
+    // specifically call it
+    observable.onCompleted()
 }
 
 // Sends subscribers either the most recent event, or the initial value of the stream
 example(of: "BehaviorSubject") {
-  
-  let disposeBag = DisposeBag()
-  
-  // doesn't need to be given an explicit Element type, it gets inferred from the initial value
-  // BehaviorSubject<String>
-  let observable = BehaviorSubject(value: "Hello")
-  observable.onNext("World")
-  observable.onNext("Nice to meet you")
-  
-  // this only receives the initial value OR the most recent one
-  observable
-    .subscribe {
-      print($0)
-    }
-    .disposed(by: disposeBag)
+    
+    let disposeBag = DisposeBag()
+    
+    // doesn't need to be given an explicit Element type, it gets inferred from the initial value
+    // BehaviorSubject<String>
+    let observable = BehaviorSubject(value: "Hello")
+    observable.onNext("World")
+    observable.onNext("Nice to meet you")
+    
+    // this only receives the initial value OR the most recent one
+    observable
+        .subscribe {
+            print($0)
+        }
+        .disposed(by: disposeBag)
 }
 
 // It replays a buffer of events, you determine the size of the buffer
 example(of: "ReplaySubject") {
-  
-  let disposeBag = DisposeBag()
-  let observable = ReplaySubject<Int>.create(bufferSize: 4)
-  observable.onNext(1)
-  observable.onNext(2)
-  observable.onNext(3)
-  observable.onNext(4)
-  observable.onNext(5)
-  observable.onNext(6)
-  
-  observable.subscribe {
-    print($0)
-    }.disposed(by: disposeBag)
-  
-  observable
-    .subscribe(onNext: {
-      print($0)
-    })
-    .disposed(by: disposeBag)
+    
+    let disposeBag = DisposeBag()
+    let observable = ReplaySubject<Int>.create(bufferSize: 4) // num of elements in the stream
+    observable.onNext(1)
+    observable.onNext(2)
+    observable.onNext(3)
+    observable.onNext(4)
+    observable.onNext(5)
+    observable.onNext(6)
+    
+    observable.subscribe { // size of 4 - will return last 4 events
+        print($0)
+        }.disposed(by: disposeBag)
+    
+    observable
+        .subscribe(onNext: {
+            print($0)
+        })
+        .disposed(by: disposeBag)
 }
 
 // Wrapper on a BehaviorSubject
-example(of: "Variable") {
-  let disposeBag = DisposeBag()
-  
-  // Variable<String>
-  let observable = Variable("cat")
-  
-  // Observable<String>
-  let behaviorSubject = observable.asObservable()
-  observable.value = "dog"
-  observable.value = "mouse"
-  observable.value = "kitten"
-  
-  // only "kitten" gets outputted because it was the last value that was emitted before the subscription occured.
-  // but all subsequent events get outputted as well because they come after the subscription has occurred
-  behaviorSubject.subscribe {
-    print($0)
-  }
-  
-  observable.value = "bird"
-  observable.value = "snake"
-  observable.value = "rabbit"
-
+example(of: "Variable") { // wrapper around behavior obj
+    let disposeBag = DisposeBag()
+    
+    // Variable<String>
+    let observable = Variable("cat")
+    
+    // Observable<String>
+    let behaviorSubject = observable.asObservable() // type of observable string
+    observable.value = "dog"
+    observable.value = "mouse"
+    observable.value = "kitten"
+    
+    // only "kitten" gets outputted because it was the last value that was emitted before the subscription occured.
+    // but all subsequent events get outputted as well because they come after the subscription has occurred
+    behaviorSubject.subscribe {
+        print($0)
+    }
+    
+    observable.value = "bird"
+    observable.value = "snake"
+    observable.value = "rabbit"
+    
 }
 
 /*
- It's your party, and you're opening presents. But your mother leaves the room to get cupcakes, 
+ It's your party, and you're opening presents. But your mother leaves the room to get cupcakes,
  and you open three presents.
  
  - Your friends that are present for you receiving events since the start, just observe the events the entire time you open presents. They're subscribed to your opening present observations
@@ -240,3 +240,101 @@ example(of: "Variable") {
  - Your other not so good friend just comes in for the cake/ambience. So they don't care about what has already occurred, but they pay attention to all further present opening events. They are like a PublishSubject
  */
 
+example(of: "map") {
+    // we can chain functions
+    let disposeBag = DisposeBag()
+    Observable.of(1, 2, 3, 10) // return observable<Int>
+        .map{ $0 * $0 } // Observable<Int> still
+        .subscribe(onNext: { // now we subscribe to the result of the map() func call, which is Observable<Int>
+            print($0)
+        })
+}
+
+example(of: "filter") {
+    let disposeBag = DisposeBag()
+    Observable.generate(initialState: 0,
+                        condition: {$0 < 100 },
+                        iterate: { $0 + 1 })
+        .filter{ $0 % 2 == 0 }
+        .filter{ $0 % 10 == 0 }
+        .map{ $0 + 1000 }
+        .subscribe(onNext: { print($0) })
+        .disposed(by: disposeBag)
+}
+
+example(of: "distinctUntilChanged") {
+    
+    let disposeBag = DisposeBag()
+    let observable = PublishSubject<String>()
+    
+    observable
+        .distinctUntilChanged() // compare
+        .map{ $0.lowercased() }
+        .subscribe(onNext: { // only pass it along if different
+            print($0)
+        })
+    
+    observable.onNext("Hello")
+    observable.onNext("Hello")
+    observable.onNext("There")
+    observable.onNext("There")
+}
+
+// continue to observe events until a specific predicate is met
+example(of: "takeUntil") {
+    
+    let disposeBag = DisposeBag()
+    Observable.generate(initialState: 1,
+                        condition: { $0 < 10 },
+                        iterate: { $0 + 1 })
+        .takeWhile{ $0 < 5 } // until value received is < 5
+        .subscribe(onNext: {
+            print($0)
+        })
+        .disposed(by: disposeBag)
+}
+
+// scan: like reduce in that it performs an aggregate function on a sequence of values, but it differs because you can access each step of the aggregation as an observable object. Reduct just returns the since observable with the aggregated value
+// buffer:
+example(of: "scan & buffer") {
+    
+    let disposeBag = DisposeBag()
+    let observable = PublishSubject<Int>() // PublishObj needs to know the element type
+    /* observable
+     .buffer(timeSpan: 0.0, // will go based on count if 0
+     count: 2,
+     scheduler: MainScheduler.instance) // puts it on the main queue when it's ready after buffer
+     //        .toArray()
+     .subscribe(onNext: {
+     print($0) // the observer made sure we are only printing 3 elements
+     })
+     .disposed(by: disposeBag)*/
+    
+    // It's all about what function you use on the returned value of the prior function
+    observable
+        .scan(501, accumulator: -) // takes an intial value and aggregates the value in some way
+        .buffer(timeSpan: 0.0,
+                count: 3,
+                scheduler: MainScheduler.instance)
+        .map {
+            print($0)
+            return $0.reduce(0, +)
+        }
+        .subscribe(onNext: {
+            print("Elements =>", $0)
+        })
+        .disposed(by: disposeBag)
+    
+    observable.onNext(10)
+    observable.onNext(20)
+    observable.onNext(30)
+    
+    observable.onNext(40)
+    observable.onNext(50)
+    observable.onNext(60)
+    
+    observable.onNext(500)
+}
+
+// flatMap, flatMapLast
+// scan
